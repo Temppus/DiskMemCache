@@ -18,6 +18,8 @@ var result = await DiskMemCache.GetOrComputeAsync("exampleKey123", () => Task.Fr
 var result = await DiskMemCache.GetOrComputeAsync("exampleKey123", () => Task.FromResult(10));
  ```
 
+See [tests](DiskMemCache.Tests/DiskMemCacheTests.cs) for more examples.
+
 ### Cache invalidation
 
 You can invalidate cache either manually by calling
