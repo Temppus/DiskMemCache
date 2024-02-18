@@ -9,35 +9,34 @@ Library was designed to solve issue of wasted time while developing and applicat
 Every time you want to cache/persist result of operation you can wrap this call with:
 
  ```csharp
-// First call with this key will trigger computation and also saves the result inside in memory cache and also on filesytem via JSON serialization
+// First call with this key will trigger computation and also saves the result inside
+// in memory cache and also on filesytem via JSON serialization
 var result = await DiskMemCache.GetOrComputeAsync("key-123", () => 9);
 Assert.Equal(9, x);
 
-// Next call for this operation with same key will be returned from cache or will be deserialized from file if application was restarted later on.
+// Next call for this operation with same key will be returned from cache
+// or will be deserialized from file if application was restarted later on
 result = await DiskMemCache.GetOrComputeAsync(key, () => 10);
 Assert.Equal(9, x);
  ```
 
 ### Cache invalidation
 
-You can invalidate cache either manually
+You can invalidate cache either manually calling
 
 
 ```csharp
-// Removes all cached entries in memory or in files
+// Removes all cached entries stored in memory or on files on disk
 DiskMemCache.PurgeAll();
 
 // Removes only operation with concrete key
 DiskMemCache.Purge(key => key == "123");
 ```
 
-or you can specify conditional lambda in each wrapped call to force computation again after some specified time
-
+or by using overload where you invalidate cache and "force" operation to be evaluated based on last caching time
 
 ```csharp
-// Each call will evaluate condition based on timespan from last caching time
-// and will invalidate cache and operation will be recomputate again
-// (in this example if entry is older than 5 minutes).
+// Force cache invalidation if entry was cached more than 5 minutes ago
 var x = await DiskMemCache.GetOrComputeAsync(key, () => 9,
  t => t > TimeSpan.FromMinutes(5));
 ```
