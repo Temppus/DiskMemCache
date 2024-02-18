@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,15 +11,18 @@ namespace DiskMemCache
     public static class DiskMemCache
     {
         private const string KeyFileExtension = ".json";
+        private const string FilenameDelimiter = "___";
 
-        public static readonly string DiskCacheDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DiskMemCache");
+        private const string CacheDirName = "DiskMemCache";
+
+        public static readonly string CacheDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), CacheDirName);
 
         static DiskMemCache()
         {
-            if (!Directory.Exists(DiskCacheDir))
+            if (!Directory.Exists(CacheDir))
             {
-                Directory.CreateDirectory(DiskCacheDir);
+                Directory.CreateDirectory(CacheDir);
             }
         }
 
@@ -34,12 +38,14 @@ namespace DiskMemCache
             return GetOrComputeAsync(key, computeFunc, invalidateIf, null, cancellationToken);
         }
 
-        public static async Task<T> GetOrComputeAsync<T>(string key, Func<T> computeFunc, Predicate<TimeSpan> invalidateIf, Predicate<T> cacheIf, CancellationToken cancellationToken = default)
+        public static async Task<T> GetOrComputeAsync<T>(string key, Func<T> computeFunc, Predicate<TimeSpan>? invalidateIf, Predicate<T>? cacheIf, CancellationToken cancellationToken = default)
         {
+            if (computeFunc == null) throw new ArgumentNullException(nameof(computeFunc));
+
             var now = DateTime.UtcNow;
 
-            var fileNameWithExt = $"{key}___{now.Ticks}{KeyFileExtension}";
-            var filePath = Path.Combine(DiskCacheDir, fileNameWithExt);
+            var fileNameWithExt = $"{key}{FilenameDelimiter}{now.Ticks}{KeyFileExtension}";
+            var filePath = Path.Combine(CacheDir, fileNameWithExt);
 
             if (MemCache.TryGetValue(key, out var value))
             {
@@ -54,7 +60,7 @@ namespace DiskMemCache
                 }
             }
 
-            if (TryGetFile(DiskCacheDir, $"{key}___", out var file))
+            if (TryGetFile(CacheDir, $"{key}{FilenameDelimiter}", out var file))
             {
                 FileNameToKeyAndTimestamp(file, out _, out var cacheTime);
 
@@ -67,6 +73,12 @@ namespace DiskMemCache
                     var jsonStr = await File.ReadAllTextAsync(file, cancellationToken);
 
                     var deserializedData = JsonConvert.DeserializeObject<T>(jsonStr);
+
+                    if (deserializedData == null)
+                    {
+                        throw new InvalidOperationException($"Failed to deserialize data from file '{file}'.");
+                    }
+
                     MemCache.TryAdd(key, (now, deserializedData));
                     return deserializedData;
                 }
@@ -85,7 +97,7 @@ namespace DiskMemCache
             return data;
         }
 
-        private static bool TryGetFile(string directoryPath, string fileNameStartWith, out string file)
+        private static bool TryGetFile(string directoryPath, string fileNameStartWith, [MaybeNullWhen(false)] out string file)
         {
             file = null;
 
@@ -94,7 +106,7 @@ namespace DiskMemCache
                 throw new DirectoryNotFoundException($"Directory '{directoryPath}' not found.");
             }
 
-            string[] files = Directory.GetFiles(directoryPath, $"{fileNameStartWith}*");
+            var files = Directory.GetFiles(directoryPath, $"{fileNameStartWith}*");
 
             bool exists = files.Length > 0;
 
@@ -111,7 +123,7 @@ namespace DiskMemCache
             Purge(null as Predicate<string>);
         }
 
-        public static void Purge(Predicate<string> keyPredicate = null)
+        public static void Purge(Predicate<string>? keyPredicate = null)
         {
             if (keyPredicate == null)
             {
@@ -122,7 +134,7 @@ namespace DiskMemCache
             Purge((key, _) => keyPredicate(key));
         }
 
-        public static void Purge(Func<string, TimeSpan, bool> keyPredicate = null)
+        public static void Purge(Func<string, TimeSpan, bool>? keyPredicate = null)
         {
             var now = DateTime.UtcNow;
 
@@ -130,7 +142,7 @@ namespace DiskMemCache
             {
                 MemCache.Clear();
 
-                foreach (var file in Directory.GetFiles(DiskCacheDir))
+                foreach (var file in Directory.GetFiles(CacheDir))
                 {
                     File.Delete(file);
                 }
@@ -148,7 +160,7 @@ namespace DiskMemCache
                 }
             }
 
-            foreach (var file in Directory.GetFiles(DiskCacheDir))
+            foreach (var file in Directory.GetFiles(CacheDir))
             {
                 FileNameToKeyAndTimestamp(file, out var key, out var cacheTime);
 
@@ -156,7 +168,7 @@ namespace DiskMemCache
 
                 if (keyPredicate(key, diff))
                 {
-                    File.Delete(Path.Combine(DiskCacheDir, Path.GetFileName(file)));
+                    File.Delete(Path.Combine(CacheDir, Path.GetFileName(file)));
                 }
             }
         }
@@ -164,7 +176,7 @@ namespace DiskMemCache
         private static void FileNameToKeyAndTimestamp(string file, out string key, out DateTime timestamp)
         {
             var fileName = Path.GetFileNameWithoutExtension(file);
-            var split = fileName.Split("___");
+            var split = fileName.Split(FilenameDelimiter);
 
             key = split[0];
             timestamp = new DateTime(long.Parse(split[1]));
