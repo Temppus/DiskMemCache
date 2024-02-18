@@ -3,19 +3,19 @@
 Minimalistic persistence and caching library.
 
 ## Which problem it solves ?
-Library was designed to solve issue of wasted time while developing and application that needs to do some heavy or long computation of some data and you do not want to wait for that result every timeyou are developing an app but you need the data to be there.
+Library was designed to solve issue of not wasting time while developing and application that needs to do some heavy or long computation of some data and you do not want to wait for that result every time you are developing an app, but you need the data to be there.
 
 ### How it works ?
 Every time you want to cache/persist result of operation you can wrap this call with:
 
  ```csharp
 // First call with this key will call provided function and also saves the result in:
-// memory cache and also on filesytem as JSON
-var result = await DiskMemCache.GetOrComputeAsync("key-123", () => 10);
+// memory cache and also on filesystem as JSON
+var result = await DiskMemCache.GetOrComputeAsync("exampleKey123", () => 10);
 
 // Next calls for operation with same key will be returned from memory cache
 // or will be deserialized from file if application was restarted later on
-var result = await DiskMemCache.GetOrComputeAsync(key, () => 10);
+var result = await DiskMemCache.GetOrComputeAsync("exampleKey123", () => 10);
  ```
 
 ### Cache invalidation
