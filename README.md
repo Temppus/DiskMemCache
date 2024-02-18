@@ -1,6 +1,6 @@
 # DiskMemCache
 
-Minimalistic persistence and caching library.
+Minimalistic persistence and caching library. Nuget available [here](https://www.nuget.org/packages/DiskMemCache/).
 
 ## Which problem it solves ?
 Library was designed to solve issue of not wasting time while developing and application that needs to do some heavy or long computation of some data and you do not want to wait for that result every time you are developing an app, but you need the data to be there.
