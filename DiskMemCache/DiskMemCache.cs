@@ -6,7 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace DiskMemCache
+// ReSharper disable once CheckNamespace
+namespace Temppus.Caching
 {
     public static class DiskMemCache
     {

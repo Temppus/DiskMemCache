@@ -1,4 +1,7 @@
-namespace DiskMemCache.Tests
+using Temppus.Caching;
+
+// ReSharper disable once CheckNamespace
+namespace Temppus.Tests
 {
     public class DiskMemCacheTests : IDisposable
     {

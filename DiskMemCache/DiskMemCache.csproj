@@ -16,8 +16,8 @@
     <PackageTags>caching;persistence;minimal</PackageTags>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>2.0.0</Version>
-    <PackageReleaseNotes>Async only API.</PackageReleaseNotes>
+    <Version>2.1.0</Version>
+    <PackageReleaseNotes>Namespace update.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
