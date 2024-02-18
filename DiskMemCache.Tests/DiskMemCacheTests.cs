@@ -15,6 +15,8 @@ namespace DiskMemCache.Tests
         private static Task<Item> ComputeItem10() => Task.FromResult(new Item { Value = 10 });
         private static Task<Item> ComputeItem20() => Task.FromResult(new Item { Value = 20 });
 
+        private static Task<Item> LongRunningOperation() => Task.FromResult(new Item { Value = 20 });
+
         [Fact]
         public async Task Test_Caching_Simple()
         {
