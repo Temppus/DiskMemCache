@@ -11,11 +11,11 @@ Every time you want to cache/persist result of operation you can wrap this call 
  ```csharp
 // First call with this key will call provided function and also saves the result in:
 // memory cache and also on filesystem as JSON
-var result = await DiskMemCache.GetOrComputeAsync("exampleKey123", () => 10);
+var result = await DiskMemCache.GetOrComputeAsync("exampleKey123", () => Task.FromResult(10));
 
 // Next calls for operation with same key will be returned from memory cache
 // or will be deserialized from file if application was restarted later on
-var result = await DiskMemCache.GetOrComputeAsync("exampleKey123", () => 10);
+var result = await DiskMemCache.GetOrComputeAsync("exampleKey123", () => Task.FromResult(10));
  ```
 
 ### Cache invalidation
@@ -35,7 +35,7 @@ or by using overload where you invalidate cache and "force" operation to be eval
 
 ```csharp
 // Force cache invalidation if cached entry existed more than your conditional logic
-var x = await DiskMemCache.GetOrComputeAsync(key, () => 9, t =>
+var x = await DiskMemCache.GetOrComputeAsync(key, () => Task.FromResult(10), t =>
 // in this case 5 minutes ago
  t > TimeSpan.FromMinutes(5));
 ```
