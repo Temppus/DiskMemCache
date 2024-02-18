@@ -12,8 +12,8 @@ namespace DiskMemCache.Tests
             public int Value { get; set; }
         }
 
-        private static Item ComputeItem10() => new() { Value = 10 };
-        private static Item ComputeItem20() => new() { Value = 20 };
+        private static Task<Item> ComputeItem10() => Task.FromResult(new Item { Value = 10 });
+        private static Task<Item> ComputeItem20() => Task.FromResult(new Item { Value = 20 });
 
         [Fact]
         public async Task Test_Caching_Simple()
@@ -37,9 +37,9 @@ namespace DiskMemCache.Tests
         {
             var key = Guid.NewGuid().ToString();
 
-            var x = await DiskMemCache.GetOrComputeAsync(key, () => 9);
+            var x = await DiskMemCache.GetOrComputeAsync(key, () => Task.FromResult(9));
             Assert.Equal(9, x);
-            x = await DiskMemCache.GetOrComputeAsync(key, () => 10);
+            x = await DiskMemCache.GetOrComputeAsync(key, () => Task.FromResult(9));
             Assert.Equal(9, x);
         }
 

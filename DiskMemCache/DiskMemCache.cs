@@ -30,17 +30,17 @@ namespace DiskMemCache
 
         private static readonly Dictionary<string, (DateTime cacheTime, object data)> MemCache = new();
 
-        public static Task<T> GetOrComputeAsync<T>(string key, Func<T> computeFunc, CancellationToken cancellationToken = default)
+        public static Task<T> GetOrComputeAsync<T>(string key, Func<Task<T>> computeFunc, CancellationToken cancellationToken = default)
         {
             return GetOrComputeAsync(key, computeFunc, null, null, cancellationToken);
         }
 
-        public static Task<T> GetOrComputeAsync<T>(string key, Func<T> computeFunc, Predicate<TimeSpan> invalidateIf, CancellationToken cancellationToken = default)
+        public static Task<T> GetOrComputeAsync<T>(string key, Func<Task<T>> computeFunc, Predicate<TimeSpan> invalidateIf, CancellationToken cancellationToken = default)
         {
             return GetOrComputeAsync(key, computeFunc, invalidateIf, null, cancellationToken);
         }
 
-        public static async Task<T> GetOrComputeAsync<T>(string key, Func<T> computeFunc, Predicate<TimeSpan>? invalidateIf, Predicate<T>? cacheIf, CancellationToken cancellationToken = default)
+        public static async Task<T> GetOrComputeAsync<T>(string key, Func<Task<T>> computeFunc, Predicate<TimeSpan>? invalidateIf, Predicate<T>? cacheIf, CancellationToken cancellationToken = default)
         {
             if (computeFunc == null) throw new ArgumentNullException(nameof(computeFunc));
 
@@ -90,7 +90,7 @@ namespace DiskMemCache
                     }
                 }
 
-                var data = computeFunc();
+                var data = await computeFunc();
 
                 if (cacheIf != null && !cacheIf(data))
                 {
