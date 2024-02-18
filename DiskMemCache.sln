@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34408.163
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiskMemCache", "DiskMemCache\DiskMemCache.csproj", "{369CDE2C-93CB-4E18-8C58-DCD0A0353BE5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiskMemCache.Tests", "DiskMemCache.Tests\DiskMemCache.Tests.csproj", "{FDA5D7D6-4881-4188-8372-6C6B245AB81A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{369CDE2C-93CB-4E18-8C58-DCD0A0353BE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{369CDE2C-93CB-4E18-8C58-DCD0A0353BE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{369CDE2C-93CB-4E18-8C58-DCD0A0353BE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{369CDE2C-93CB-4E18-8C58-DCD0A0353BE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDA5D7D6-4881-4188-8372-6C6B245AB81A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDA5D7D6-4881-4188-8372-6C6B245AB81A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDA5D7D6-4881-4188-8372-6C6B245AB81A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDA5D7D6-4881-4188-8372-6C6B245AB81A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9CFD6246-6E26-4919-8405-0326E54BB050}
+	EndGlobalSection
+EndGlobal
