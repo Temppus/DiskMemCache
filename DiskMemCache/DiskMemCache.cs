@@ -10,13 +10,15 @@ namespace DiskMemCache
 {
     public static class DiskMemCache
     {
+        public static readonly string CacheDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            CacheDirName);
+
+        private const string CacheDirName = "DiskMemCache";
         private const string KeyFileExtension = ".json";
         private const string FilenameDelimiter = "___";
 
-        private const string CacheDirName = "DiskMemCache";
-
-        public static readonly string CacheDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), CacheDirName);
+        private static readonly SemaphoreSlim SemaphoreSlim = new(1);
 
         static DiskMemCache()
         {
@@ -47,54 +49,63 @@ namespace DiskMemCache
             var fileNameWithExt = $"{key}{FilenameDelimiter}{now.Ticks}{KeyFileExtension}";
             var filePath = Path.Combine(CacheDir, fileNameWithExt);
 
-            if (MemCache.TryGetValue(key, out var value))
+            await SemaphoreSlim.WaitAsync(cancellationToken);
+
+            try
             {
-                var timeDiff = now - value.cacheTime;
-                if (invalidateIf?.Invoke(timeDiff) == true)
+                if (MemCache.TryGetValue(key, out var value))
                 {
-                    Purge(k => k == key);
-                }
-                else
-                {
-                    return (T)value.data;
-                }
-            }
-
-            if (TryGetFile(CacheDir, $"{key}{FilenameDelimiter}", out var file))
-            {
-                FileNameToKeyAndTimestamp(file, out _, out var cacheTime);
-
-                if (invalidateIf?.Invoke(now - cacheTime) == true)
-                {
-                    Purge(k => k == key);
-                }
-                else
-                {
-                    var jsonStr = await File.ReadAllTextAsync(file, cancellationToken);
-
-                    var deserializedData = JsonConvert.DeserializeObject<T>(jsonStr);
-
-                    if (deserializedData == null)
+                    var timeDiff = now - value.cacheTime;
+                    if (invalidateIf?.Invoke(timeDiff) == true)
                     {
-                        throw new InvalidOperationException($"Failed to deserialize data from file '{file}'.");
+                        Purge(k => k == key);
                     }
-
-                    MemCache.TryAdd(key, (now, deserializedData));
-                    return deserializedData;
+                    else
+                    {
+                        return (T)value.data;
+                    }
                 }
-            }
 
-            var data = computeFunc();
+                if (TryGetFile(CacheDir, $"{key}{FilenameDelimiter}", out var file))
+                {
+                    FileNameToKeyAndTimestamp(file, out _, out var cacheTime);
 
-            if (cacheIf != null && !cacheIf(data))
-            {
+                    if (invalidateIf?.Invoke(now - cacheTime) == true)
+                    {
+                        Purge(k => k == key);
+                    }
+                    else
+                    {
+                        var jsonStr = await File.ReadAllTextAsync(file, cancellationToken);
+
+                        var deserializedData = JsonConvert.DeserializeObject<T>(jsonStr);
+
+                        if (deserializedData == null)
+                        {
+                            throw new InvalidOperationException($"Failed to deserialize data from file '{file}'.");
+                        }
+
+                        MemCache.TryAdd(key, (now, deserializedData));
+                        return deserializedData;
+                    }
+                }
+
+                var data = computeFunc();
+
+                if (cacheIf != null && !cacheIf(data))
+                {
+                    return data;
+                }
+
+                MemCache.TryAdd(key, (now, data));
+                await File.WriteAllTextAsync(filePath, JsonConvert.SerializeObject(data), cancellationToken);
+
                 return data;
             }
-
-            MemCache.TryAdd(key, (now, data));
-            await File.WriteAllTextAsync(filePath, JsonConvert.SerializeObject(data), cancellationToken);
-
-            return data;
+            finally
+            {
+                SemaphoreSlim.Release();
+            }
         }
 
         private static bool TryGetFile(string directoryPath, string fileNameStartWith, [MaybeNullWhen(false)] out string file)
