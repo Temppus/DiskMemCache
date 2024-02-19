@@ -27,7 +27,7 @@ for (int i = 0; i < 100; i++)
         t => t > TimeSpan.FromHours(1));
 }
 
-// process can be re-started and result will be still return from persitent cache
+// process can be re-started and result will still be returned from persistent cache
 // if cached item is than 1 hour old
 var resultReturnedFromSerializedFile = await DiskMemCache.GetOrComputeAsync("my-expensive-func", LongRunningOperationFunctionToCacheAsync,
     t => t > TimeSpan.FromHours(1));
