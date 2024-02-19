@@ -43,7 +43,7 @@ namespace Temppus.Tests
                     LongRunningOperationFunctionToCacheAsync,
                     t => t > TimeSpan.FromHours(1));
 
-                Assert.Equal(9000, result.Value);
+                Assert.Equal(9000, resultFromMemCache.Value);
             }
 
             // process re-started (assuming less than 1 hour from item  being cached)
@@ -52,7 +52,7 @@ namespace Temppus.Tests
                 LongRunningOperationFunctionToCacheAsync,
                 t => t > TimeSpan.FromHours(1));
 
-            Assert.Equal(9000, result.Value);
+            Assert.Equal(9000, resultReturnedFromSerializedFile.Value);
 
             sw.Stop();
 
