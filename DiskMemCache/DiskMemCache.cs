@@ -59,7 +59,7 @@ namespace Temppus.Caching
                     var timeDiff = now - value.cacheTime;
                     if (invalidateIf?.Invoke(timeDiff) == true)
                     {
-                        Purge(k => k == key);
+                        PurgeCore((k, _) => k == key, holdingLock: true);
                     }
                     else
                     {
@@ -73,7 +73,7 @@ namespace Temppus.Caching
 
                     if (invalidateIf?.Invoke(now - cacheTime) == true)
                     {
-                        Purge(k => k == key);
+                        PurgeCore((k, _) => k == key, holdingLock: true);
                     }
                     else
                     {
@@ -148,39 +148,59 @@ namespace Temppus.Caching
 
         public static void Purge(Func<string, TimeSpan, bool>? keyPredicate = null)
         {
+            PurgeCore(keyPredicate, holdingLock: false);
+        }
+
+        private static void PurgeCore(Func<string, TimeSpan, bool>? keyPredicate, bool holdingLock)
+        {
             var now = DateTime.UtcNow;
 
-            if (keyPredicate == null)
+            if (!holdingLock)
             {
-                MemCache.Clear();
+                SemaphoreSlim.Wait();
+            }
+
+            try
+            {
+                if (keyPredicate == null)
+                {
+                    MemCache.Clear();
+
+                    foreach (var file in Directory.GetFiles(CacheDir))
+                    {
+                        File.Delete(file);
+                    }
+
+                    return;
+                }
+
+                foreach (var kv in MemCache)
+                {
+                    var diff = now - kv.Value.cacheTime;
+
+                    if (keyPredicate(kv.Key, diff))
+                    {
+                        MemCache.Remove(kv.Key);
+                    }
+                }
 
                 foreach (var file in Directory.GetFiles(CacheDir))
                 {
-                    File.Delete(file);
-                }
+                    FileNameToKeyAndTimestamp(file, out var key, out var cacheTime);
 
-                return;
-            }
+                    var diff = now - cacheTime;
 
-            foreach (var kv in MemCache)
-            {
-                var diff = now - kv.Value.cacheTime;
-
-                if (keyPredicate(kv.Key, diff))
-                {
-                    MemCache.Remove(kv.Key);
+                    if (keyPredicate(key, diff))
+                    {
+                        File.Delete(Path.Combine(CacheDir, Path.GetFileName(file)));
+                    }
                 }
             }
-
-            foreach (var file in Directory.GetFiles(CacheDir))
+            finally
             {
-                FileNameToKeyAndTimestamp(file, out var key, out var cacheTime);
-
-                var diff = now - cacheTime;
-
-                if (keyPredicate(key, diff))
+                if (!holdingLock)
                 {
-                    File.Delete(Path.Combine(CacheDir, Path.GetFileName(file)));
+                    SemaphoreSlim.Release();
                 }
             }
         }
